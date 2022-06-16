@@ -3,6 +3,7 @@ Definitions.
 FLOAT           = -?[0-9]+\.[0-9]+([eE][-+]?[0-9]+)?
 INT             = -?[0-9]+
 STRING          = [a-zA-Z0-9_\.]+
+KEY             = [a-zA-Z0-9_]+\s*:
 BOOL            = (true|false)
 WS              = [\s\t]+
 NL              = [\n\r]+
@@ -26,6 +27,7 @@ file_extension{WS}  : {token, {file_extension, TokenLine}}.
 {INT}           : {Val, _} = string:to_integer(TokenChars), {token, {int, TokenLine, Val}}.
 {BOOL}          : {token, {int, TokenLine, get_bool(TokenChars)}}.
 {STRING}        : {token, {string, TokenLine, TokenChars}}.
+{KEY}           : {token, {key, TokenLine, get_key(TokenChars)}}.
 {WS}            : skip_token.
 {NL}            : skip_token.
 {COMMENT}       : skip_token.
@@ -39,7 +41,6 @@ file_extension{WS}  : {token, {file_extension, TokenLine}}.
 \]    : {token, {']',  TokenLine}}.
 \;    : {token, {';',  TokenLine}}.
 \,    : {token, {',',  TokenLine}}.
-\:    : {token, {':',  TokenLine}}.
 \=    : {token, {'=',  TokenLine}}.
 \"    : {token, {quote, TokenLine}}.
 
@@ -47,3 +48,5 @@ Erlang code.
 
 get_bool("true") -> true;
 get_bool("false") -> false.
+
+get_key(Token) -> string:trim(Token, trailing, "\s:").

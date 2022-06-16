@@ -1,5 +1,5 @@
 Nonterminals root definition option fields field key_def value attribute_def attributes struct_fields struct_field struct_key_def atoms atom.
-Terminals  table struct enum union namespace root_type include attribute file_identifier file_extension float int bool string '}' '{' '(' ')' '[' ']' ';' ',' ':' '=' quote.
+Terminals  table struct enum union namespace root_type include attribute file_identifier file_extension float int bool string key '}' '{' '(' ')' '[' ']' ';' ',' '=' quote.
 Rootsymbol root.
 
 root -> definition      : {'$1', #{}}.
@@ -24,7 +24,7 @@ definition -> table string '(' attributes ')' '{' fields '}'          : #{get_va
 definition -> table string '(' attributes ')' '{' '}'                 : #{get_value_atom('$2') => {table, []} }.
 definition -> struct string '{' struct_fields '}'                     : #{get_value_atom('$2') => {struct, '$4'} }.
 definition -> struct string '(' attributes ')' '{' struct_fields '}'  : #{get_value_atom('$2') => {struct, '$7'} }.
-definition -> enum string ':' string '{' atoms '}'                    : #{get_value_atom('$2') => {{enum, get_value_atom('$4')}, '$6' }}.
+definition -> enum key string '{' atoms '}'                           : #{get_value_atom('$2') => {{enum, get_value_atom('$3')}, '$5' }}.
 definition -> union string '{' atoms '}'                              : #{get_value_atom('$2') => {union, '$4'} }.
 definition -> union string '(' attributes ')' '{' atoms '}'           : #{get_value_atom('$2') => {union, '$7'} }.
 
@@ -35,15 +35,15 @@ fields -> field ';' fields  : [ '$1' | '$3' ].
 field -> key_def                    : '$1'.
 field -> key_def '(' attributes ')' : '$1'.
 
-key_def -> string ':' string              : { get_value_atom('$1'), get_value_atom('$3') }.
-key_def -> string ':' '[' string ']'      : { get_value_atom('$1'), {vector, get_value_atom('$4')}}.
-key_def -> string ':' string '=' value    : { get_value_atom('$1'), {get_value_atom('$3'), '$5' }}.
+key_def -> key string              : { get_value_atom('$1'), get_value_atom('$2') }.
+key_def -> key '[' string ']'      : { get_value_atom('$1'), {vector, get_value_atom('$3')}}.
+key_def -> key string '=' value    : { get_value_atom('$1'), {get_value_atom('$2'), '$4' }}.
 
-attributes -> attributes ',' attribute_def.  %ignore
-attributes -> attribute_def.                 %ignore
-attribute_def -> string ':' quote value quote.   %ignore
-attribute_def -> string ':' value.           %ignore
-attribute_def -> string.                     %ignore
+attributes -> attributes ',' attribute_def.     %ignore
+attributes -> attribute_def.                    %ignore
+attribute_def -> key quote value quote.         %ignore
+attribute_def -> key value.                     %ignore
+attribute_def -> string.                        %ignore
 
 value -> int      : get_value('$1').
 value -> float    : get_value('$1').
@@ -56,7 +56,7 @@ struct_fields -> struct_field ';' struct_fields  : [ '$1' | '$3' ].
 
 struct_field -> struct_key_def  : '$1'.
 
-struct_key_def -> string ':' string              : { get_value_atom('$1'), get_value_atom('$3') }.
+struct_key_def -> key string              : { get_value_atom('$1'), get_value_atom('$2') }.
 
 % enums + unions
 atoms -> atom             : [ '$1' ].
