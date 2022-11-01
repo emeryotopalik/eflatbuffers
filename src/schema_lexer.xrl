@@ -8,7 +8,7 @@ WS              = [\s\t]+
 NL              = [\n\r]+
 COMMENT         = //[^\n\r]+
 BLOCK_COMMENT   = /\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/
-STRING_CONSTANT = \".*\"
+STRING_CONSTANT = \"[^"]*\"
 COLON           = \:
 
 Rules.
