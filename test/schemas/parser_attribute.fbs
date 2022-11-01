@@ -1,5 +1,7 @@
 attribute "priority";
 attribute "name";
+attribute "more";
+attribute "flag";
 
 enum Color : byte (priority: 5) { Red, Green, Blue }
 union Animal (priority: 4) { Dog, Cat }
@@ -8,7 +10,7 @@ table Dog {
   age:int;
 }
 
-table Cat (name: "Meow:Purr") {
+table Cat (name: "Meow:Purr", flag) {
   lives:int;
 }
 
@@ -16,11 +18,11 @@ struct Nest (priority: 3) {
   shortNum:short;
 }
 
-table State (priority: 2, name: "Foo:Bar") {
+table State (priority: 2, name: "Foo:Bar", more: "Baz:zup") {
   active:bool = false (deprecated, priority: 1);
-  color:[Color] (priority: 6);
+  color:[Color] (priority: 6, name: "color");
   animal:Animal;
-  nest:Nest;
+  nest:Nest (priority: 9, more: "foo");
 }
 
 root_type State;

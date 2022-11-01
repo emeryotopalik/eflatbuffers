@@ -187,36 +187,39 @@ defmodule Eflatbuffers.Schema do
   end
 
   def decorate_field({:vector, type}, entities, attributes) do
-    {:vector, %{type: decorate_field(type, entities, attributes)}}
+    {:vector, %{type: decorate_field(type, entities, []), attributes: attributes}}
   end
 
   def decorate_field(field_value, entities, attributes) do
     case is_referenced?(field_value) do
       true ->
-        decorate_referenced_field(field_value, entities)
+        decorate_referenced_field(field_value, entities, attributes)
 
       false ->
         decorate_field(field_value, attributes)
     end
   end
 
-  def decorate_referenced_field(field_value, entities) do
-    case Map.get(entities, field_value) do
-      nil ->
-        throw({:error, {:entity_not_found, field_value}})
+  def decorate_referenced_field(field_value, entities, field_attributes) do
+    {type, map} =
+      case Map.get(entities, field_value) do
+        nil ->
+          throw({:error, {:entity_not_found, field_value}})
 
-      {:table, _, attributes} ->
-        {:table, %{name: field_value, attributes: attributes}}
+        {:table, _, attributes} ->
+          {:table, %{name: field_value, attributes: attributes}}
 
-      {{:enum, _}, _, attributes} ->
-        {:enum, %{name: field_value, attributes: attributes}}
+        {{:enum, _}, _, attributes} ->
+          {:enum, %{name: field_value, attributes: attributes}}
 
-      {:union, _, attributes} ->
-        {:union, %{name: field_value, attributes: attributes}}
+        {:union, _, attributes} ->
+          {:union, %{name: field_value, attributes: attributes}}
 
-      {:struct, _, attributes} ->
-        {:struct, %{name: field_value, attributes: attributes}}
-    end
+        {:struct, _, attributes} ->
+          {:struct, %{name: field_value, attributes: attributes}}
+      end
+
+    {type, Map.update!(map, :attributes, &(&1 ++ field_attributes))}
   end
 
   def decorate_field({type, default}, attributes) do

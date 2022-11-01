@@ -57,7 +57,7 @@ defmodule Eflatbuffers.SchemaTest do
 
   @expected_attribute %{
     Animal: {:union, [:Dog, :Cat], [priority: 4]},
-    Cat: {:table, [{{:lives, :int}, []}], [name: "Meow:Purr"]},
+    Cat: {:table, [{{:lives, :int}, []}], [:flag, {:name, "Meow:Purr"}]},
     Color: {{:enum, :byte}, [:Red, :Green, :Blue], [priority: 5]},
     Dog: {:table, [{{:age, :int}, []}], []},
     Nest: {:struct, [shortNum: :short], [priority: 3]},
@@ -65,11 +65,11 @@ defmodule Eflatbuffers.SchemaTest do
       :table,
       [
         {{:active, {:bool, false}}, [{:priority, 1}, :deprecated]},
-        {{:color, {:vector, :Color}}, [priority: 6]},
+        {{:color, {:vector, :Color}}, [name: "color", priority: 6]},
         {{:animal, :Animal}, []},
-        {{:nest, :Nest}, []}
+        {{:nest, :Nest}, [more: "foo", priority: 9]}
       ],
-      [name: "Foo:Bar", priority: 2]
+      [more: "Baz:zup", name: "Foo:Bar", priority: 2]
     }
   }
 
@@ -126,8 +126,44 @@ defmodule Eflatbuffers.SchemaTest do
 
     assert {:ok,
             {@expected_attribute,
-             %{attributes: ["name", "priority"], root_type: :State, file_identifier: nil}}} ==
+             %{
+               attributes: ["flag", "more", "name", "priority"],
+               root_type: :State,
+               file_identifier: nil
+             }}} ==
              res
+  end
+
+  test "parse schema with additional attributes using parse" do
+    res =
+      File.read!("test/schemas/parser_attribute.fbs")
+      |> Eflatbuffers.Schema.parse!()
+
+    assert {%{
+              State:
+                {:table,
+                 %{
+                   fields: [
+                     active:
+                       {:bool,
+                        %{
+                          attributes: [{:priority, 1}, :deprecated],
+                          default: false,
+                          use_default: true
+                        }},
+                     color:
+                       {:vector,
+                        %{
+                          attributes: [name: "color", priority: 6],
+                          type: {:enum, %{attributes: [priority: 5], name: :Color}}
+                        }},
+                     animal: {:union, %{attributes: [priority: 4], name: :Animal}},
+                     nest:
+                       {:struct,
+                        %{attributes: [priority: 3, more: "foo", priority: 9], name: :Nest}}
+                   ]
+                 }}
+            }, _} = res
   end
 
   test "parse a whole schema" do
@@ -177,11 +213,14 @@ defmodule Eflatbuffers.SchemaTest do
         %{
           fields: [
             table_field: {:table, %{name: :table_inner, attributes: []}},
-            table_vector: {:vector, %{type: {:table, %{name: :table_inner, attributes: []}}}}
+            table_vector:
+              {:vector, %{type: {:table, %{name: :table_inner, attributes: []}}, attributes: []}}
           ],
           indices: %{
             table_field: {0, {:table, %{name: :table_inner, attributes: []}}},
-            table_vector: {1, {:vector, %{type: {:table, %{name: :table_inner, attributes: []}}}}}
+            table_vector:
+              {1,
+               {:vector, %{type: {:table, %{name: :table_inner, attributes: []}}, attributes: []}}}
           },
           attributes: []
         }
@@ -213,11 +252,14 @@ defmodule Eflatbuffers.SchemaTest do
         %{
           fields: [
             enum_field: {:enum, %{name: :enum_inner, attributes: []}},
-            enum_vector: {:vector, %{type: {:enum, %{name: :enum_inner, attributes: []}}}}
+            enum_vector:
+              {:vector, %{type: {:enum, %{name: :enum_inner, attributes: []}}, attributes: []}}
           ],
           indices: %{
             enum_field: {0, {:enum, %{name: :enum_inner, attributes: []}}},
-            enum_vector: {1, {:vector, %{type: {:enum, %{name: :enum_inner, attributes: []}}}}}
+            enum_vector:
+              {1,
+               {:vector, %{type: {:enum, %{name: :enum_inner, attributes: []}}, attributes: []}}}
           },
           attributes: []
         }
@@ -241,12 +283,15 @@ defmodule Eflatbuffers.SchemaTest do
          %{
            fields: [
              union_field: {:union, %{name: :union_inner, attributes: []}},
-             union_vector: {:vector, %{type: {:union, %{name: :union_inner, attributes: []}}}}
+             union_vector:
+               {:vector, %{type: {:union, %{name: :union_inner, attributes: []}}, attributes: []}}
            ],
            indices: %{
              union_field: {0, {:union, %{attributes: [], name: :union_inner}}},
              union_vector:
-               {2, {:vector, %{type: {:union, %{attributes: [], name: :union_inner}}}}}
+               {2,
+                {:vector,
+                 %{type: {:union, %{attributes: [], name: :union_inner}}, attributes: []}}}
            },
            attributes: []
          }},
